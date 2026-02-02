@@ -128,18 +128,30 @@ pipeline {
     }
     
     post {
-        always {
-            archiveArtifacts artifacts: '**/trivyfs.txt, **/trivyimage.txt, **/dependency-check-report.*', 
-                            allowEmptyArchive: true
-            cleanWs()
-        }
-        
-        success {
-            echo "✅ Pipeline completed successfully! Image: ${DOCKER_IMAGE}:${DOCKER_TAG}"
-        }
-        
-        failure {
-            echo "❌ Pipeline failed! Check the logs."
-        }
+    always {
+        archiveArtifacts artifacts: '**/trivyfs.txt, **/trivyimage.txt, **/dependency-check-report.*',
+                        allowEmptyArchive: true
+        cleanWs()
     }
+
+    success {
+        echo "✅ Pipeline completed successfully! Image: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+
+        emailext(
+            subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+            body: "The pipeline completed successfully and the image ${DOCKER_IMAGE}:${DOCKER_TAG} was deployed.",
+            to: "you@example.com"
+        )
+    }
+
+    failure {
+        echo "❌ Pipeline failed! Check the logs."
+
+        emailext(
+            subject: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+            body: "The pipeline failed during execution. Please review the Jenkins logs.",
+            to: "you@example.com"
+        )
+    }
+}
 }
